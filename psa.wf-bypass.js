@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         psa.wf bypass shorlink
 // @namespace    https://github.com/cyan-n1d3/PSAbypass
-// @version      2.0.1
+// @version      2.0.2
 // @description  bypass and autoredirect shortlink for web psa.wf.
 // @author       cyan-n1d3
 // @homepage     https://github.com/cyan-n1d3/PSAbypass
@@ -16,7 +16,7 @@
 // @include      /^https?:\/\/(.*\.)?(shrinkme\.click|themezon\.net|mrproblogger\.com)/
 // @include      /^https?:\/\/(.*\.)?(fc-lc\.xyz|fc\.lc|jobzhub\.store)/
 // @include      /^https?:\/\/(.*\.)?(shrtslug\.biz|digiztechno\.com|tournguide\.com|yrtourguide\.com|techmize\.net|technons\.com|biovetro\.net|dailyjobposting\.xyz)/
-// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la)/
+// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la|cloudhostt\.com)/
 // @include      /^https?:\/\/(.*\.)?(bitcotrade\.net|mobiend\.com|adurl\.io)/
 // @include      /^https?:\/\/(psa\.wf\/goto\/|go2\.pics\/go2|get-to\.link|uiil\.ink)/
 // @run-at       document-start
@@ -418,10 +418,52 @@
     return;
   }
 
+  //== cloudhostt (oii.la interstitial blog, two pages)
+  // Page 1: #startButton -> 15 s countdown -> form#getmylink posts to page 2.
+  // Page 2: same countdown -> form#nextpage posts back to oii.la/<alias>.
+  // Both buttons open a popunder via onclick, hence window.open = noop.
+  if (host.includes('cloudhostt.com')) {
+    say('cloudhostt');
+    window.open = () => null;
+    const killModal = () => {
+      document.querySelectorAll('div').forEach(d => {
+        if (/Ads Blocker Detected/i.test(d.textContent) && getComputedStyle(d).position === 'fixed') d.remove();
+      });
+      if (document.body) document.body.style.overflow = '';
+    };
+    let started = false;
+    const t = setInterval(() => {
+      killModal();
+      const start = document.getElementById('startButton');
+      if (!started && start && start.offsetParent) {
+        started = true;
+        start.click();
+        sUI('WAIT FOR COUNTDOWN');
+        return;
+      }
+      const btn = document.getElementById('getnewlink');
+      if (btn && btn.offsetParent) {
+        clearInterval(t);
+        const form = btn.closest('form');
+        say('submit', form ? form.id : 'click');
+        if (form) form.submit(); else btn.click();
+      }
+    }, 500);
+    return;
+  }
+
   //== tpi.li, oii.la
   if (/tpi\.li|oii\.la/.test(host)) {
     say('tpi.li');
+    window.open = () => null;
+    hXHR(r => r.url && (location.href = r.url), '/links/go');
     const t = setInterval(() => {
+      // Final page: after the countdown a.get-link carries the target URL.
+      const gl = document.querySelector('a.get-link[href^="http"]');
+      if (gl && !gl.href.includes(location.hostname)) {
+        clearInterval(t); location.href = gl.href; return;
+      }
+
       let m = document.documentElement.innerHTML.match(/aHR0c[a-zA-Z0-9+/=]+(?<!=)/);
       if (m) {
         let d = atob(m[0]);
