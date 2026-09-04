@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         psa.wf bypass shorlink
 // @namespace    https://github.com/cyan-n1d3/PSAbypass
-// @version      2.0.2
+// @version      2.0.3
 // @description  bypass and autoredirect shortlink for web psa.wf.
 // @author       cyan-n1d3
 // @homepage     https://github.com/cyan-n1d3/PSAbypass
@@ -16,7 +16,7 @@
 // @include      /^https?:\/\/(.*\.)?(shrinkme\.click|themezon\.net|mrproblogger\.com)/
 // @include      /^https?:\/\/(.*\.)?(fc-lc\.xyz|fc\.lc|jobzhub\.store)/
 // @include      /^https?:\/\/(.*\.)?(shrtslug\.biz|digiztechno\.com|tournguide\.com|yrtourguide\.com|techmize\.net|technons\.com|biovetro\.net|dailyjobposting\.xyz)/
-// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la|cloudhostt\.com)/
+// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la|cloudhostt\.com|financeehelp\.com)/
 // @include      /^https?:\/\/(.*\.)?(bitcotrade\.net|mobiend\.com|adurl\.io)/
 // @include      /^https?:\/\/(psa\.wf\/goto\/|go2\.pics\/go2|get-to\.link|uiil\.ink)/
 // @run-at       document-start
@@ -418,12 +418,14 @@
     return;
   }
 
-  //== cloudhostt (oii.la interstitial blog, two pages)
+  //== oii.la interstitial blogs (cloudhostt, financeehelp, ...), two pages
+  // Same WordPress safelink widget on every one of them; new hosts only need
+  // adding to the @include line and the regex below.
   // Page 1: #startButton -> 15 s countdown -> form#getmylink posts to page 2.
   // Page 2: same countdown -> form#nextpage posts back to oii.la/<alias>.
   // Both buttons open a popunder via onclick, hence window.open = noop.
-  if (host.includes('cloudhostt.com')) {
-    say('cloudhostt');
+  if (/cloudhostt\.com|financeehelp\.com/.test(host)) {
+    say('safelink blog');
     window.open = () => null;
     const killModal = () => {
       document.querySelectorAll('div').forEach(d => {
@@ -455,15 +457,7 @@
   //== tpi.li, oii.la
   if (/tpi\.li|oii\.la/.test(host)) {
     say('tpi.li');
-    window.open = () => null;
-    hXHR(r => r.url && (location.href = r.url), '/links/go');
     const t = setInterval(() => {
-      // Final page: after the countdown a.get-link carries the target URL.
-      const gl = document.querySelector('a.get-link[href^="http"]');
-      if (gl && !gl.href.includes(location.hostname)) {
-        clearInterval(t); location.href = gl.href; return;
-      }
-
       let m = document.documentElement.innerHTML.match(/aHR0c[a-zA-Z0-9+/=]+(?<!=)/);
       if (m) {
         let d = atob(m[0]);
