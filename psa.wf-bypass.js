@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         psa.wf bypass shorlink
 // @namespace    https://github.com/cyan-n1d3/PSAbypass
-// @version      2.0.0
+// @version      2.0.1
 // @description  bypass and autoredirect shortlink for web psa.wf.
 // @author       cyan-n1d3
 // @homepage     https://github.com/cyan-n1d3/PSAbypass
@@ -20,6 +20,7 @@
 // @include      /^https?:\/\/(.*\.)?(bitcotrade\.net|mobiend\.com|adurl\.io)/
 // @include      /^https?:\/\/(psa\.wf\/goto\/|go2\.pics\/go2|get-to\.link|uiil\.ink)/
 // @run-at       document-start
+// @grant        none
 // ==/UserScript==
 
 (() => {
@@ -258,6 +259,25 @@
   if (/exe\.io|exe-links\.com|exeygo\.com/.test(host)) {
     say('exe');
     window.open = () => { };
+
+    // anti-adblock (common-*.js): R() skips the whole check when
+    // app_vars.adblock_allowed is truthy, otherwise it asks
+    // window.vhit.detectAdblock() (loaded from /_v/s.js) and swaps the
+    // Continue form for a "Please disable Adblock" box. Both are plain
+    // globals assigned later by page scripts, so hook their setters.
+    const hookGlobal = (name, fix) => {
+      let val;
+      try {
+        Object.defineProperty(window, name, {
+          configurable: true,
+          get() { return val; },
+          set(v) { try { fix(v); } catch { } val = v; },
+        });
+      } catch { }
+    };
+    hookGlobal('app_vars', v => { if (v && typeof v === 'object') v.adblock_allowed = true; });
+    hookGlobal('vhit', v => { if (v && typeof v === 'object') v.detectAdblock = () => Promise.resolve(false); });
+    try { Object.defineProperty(window, '__vhitBlocked', { value: undefined, writable: false }); } catch { }
     const OSI = setInterval;
     window.setInterval = (f, t, ...a) => OSI(f, t === 1e3 ? 100 : t, ...a);
 
