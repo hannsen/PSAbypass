@@ -16,7 +16,7 @@
 // @include      /^https?:\/\/(.*\.)?(shrinkme\.click|themezon\.net|mrproblogger\.com)/
 // @include      /^https?:\/\/(.*\.)?(fc-lc\.xyz|fc\.lc|jobzhub\.store)/
 // @include      /^https?:\/\/(.*\.)?(shrtslug\.biz|digiztechno\.com|tournguide\.com|yrtourguide\.com|techmize\.net|technons\.com|biovetro\.net|dailyjobposting\.xyz)/
-// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la|cloudhostt\.com|financeehelp\.com)/
+// @include      /^https?:\/\/(.*\.)?(tpi\.li|oii\.la|aii\.sh|cloudhostt\.com|financeehelp\.com|techbixby\.com)/
 // @include      /^https?:\/\/(.*\.)?(bitcotrade\.net|mobiend\.com|adurl\.io)/
 // @include      /^https?:\/\/(psa\.wf\/goto\/|go2\.pics\/go2|get-to\.link|uiil\.ink)/
 // @run-at       document-start
@@ -424,7 +424,7 @@
   // Page 1: #startButton -> 15 s countdown -> form#getmylink posts to page 2.
   // Page 2: same countdown -> form#nextpage posts back to oii.la/<alias>.
   // Both buttons open a popunder via onclick, hence window.open = noop.
-  if (/cloudhostt\.com|financeehelp\.com/.test(host)) {
+  if (/cloudhostt\.com|financeehelp\.com|techbixby\.com/.test(host)) {
     say('safelink blog');
     window.open = () => null;
     const killModal = () => {
@@ -454,8 +454,8 @@
     return;
   }
 
-  //== tpi.li, oii.la
-  if (/tpi\.li|oii\.la/.test(host)) {
+  //== tpi.li, oii.la, aii.sh (same shortener platform)
+  if (/tpi\.li|oii\.la|aii\.sh/.test(host)) {
     say('tpi.li');
     const t = setInterval(() => {
       let m = document.documentElement.innerHTML.match(/aHR0c[a-zA-Z0-9+/=]+(?<!=)/);
